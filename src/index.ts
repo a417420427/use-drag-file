@@ -86,7 +86,7 @@ export const savedEntries = (e: DragEvent): FileEntry[] => {
 
 // 处理入口文件
 async function readEntry(fileEntry: FileEntry) {
-  const files: DropFile[] = []
+  let files: DropFile[] = []
   if (fileEntry.isFile) {
     const file = await readFileEntrySync(fileEntry)
     files.push({
@@ -96,11 +96,16 @@ async function readEntry(fileEntry: FileEntry) {
   } else if (fileEntry.isDirectory) {
     const fileEntries = await readDirEntrySync(fileEntry)
     for (let i = 0; i < fileEntries.length; i++) {
-      const file = await readFileEntrySync(fileEntries[i])
-      files.push({
-        file,
-        fullPath: fileEntry.fullPath,
-      })
+      const entry = fileEntries[i]
+      if (entry.isFile) {
+        const file = await readFileEntrySync(fileEntries[i])
+        files.push({
+          file,
+          fullPath: fileEntry.fullPath,
+        })
+      } else {
+        files = files.concat(await readEntry(entry))
+      }
     }
   }
   return files
